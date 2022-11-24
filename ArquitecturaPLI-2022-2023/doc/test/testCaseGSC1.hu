@@ -1,0 +1,25 @@
+-- programa de prueba
+
+procedure testCaseGSC01 () is
+	-- declaracion constantes simbolicas
+	-- declaracion de tipos estructurados
+	type Tpersona is record
+		dni: Integer; 
+		edad: Integer; 
+		casado: Boolean;
+	end record; 
+	
+	type Tfecha is record
+		dia: Integer; 
+		mes: Integer; 
+		anyo: Integer; 
+	end record; 
+	
+	type Tcita is record
+	    usuario: Tpersona; 
+	    fecha: Tfecha; 
+	end record; 
+begin
+	
+
+end testCaseGSC01;

@@ -17,6 +17,8 @@ import es.uned.lsi.compiler.lexical.LexicalErrorManager;
 %column
 %cup
 %unicode
+// (GSC) incluyo la directiva %ignorecase
+%ignorecase
 
 
 %implements ScannerIF
@@ -26,41 +28,85 @@ import es.uned.lsi.compiler.lexical.LexicalErrorManager;
 
 %{
   LexicalErrorManager lexicalErrorManager = new LexicalErrorManager ();
+  
   private int commentCount = 0;
+  
+  private Token createToken (int simbolo){
+  	Token token = new Token(simbolo);
+  	token.setLine (yyline + 1); 
+  	token.setColumn (yycolumn + 1);
+  	token.setLexema (yytext());
+  	return token;
+  }
 %}  
   
-
-ESPACIO_BLANCO=[ \t\r\n\f]
+FIN_LINEA = \r|\n|\r\n
+ENTRADA = [^\r\n]
+ESPACIO_BLANCO = {FIN_LINEA} | [ \t\f]
+LETRA   = [A-Za-z_]
+DIGITO  = [0-9]
+CADENA = \"([\x20-\x7F])*\"
+LINEA_COMENTARIO = "--" {ENTRADA}* {FIN_LINEA}
+COMENTARIO = {LINEA_COMENTARIO}
+IDENTIFICADOR = {LETRA}({LETRA}|{DIGITO})*
 fin = "fin"{ESPACIO_BLANCO}
-
 
 %%
 
 <YYINITIAL> 
-{
-           			       
-    "+"                {  
-                           Token token = new Token (sym.PLUS);
-                           token.setLine (yyline + 1);
-                           token.setColumn (yycolumn + 1);
-                           token.setLexema (yytext ());
-           			       return token;
-                        }
+{			
+    //operadores       			       
+    "-" 				{ return createToken(sym.MINUS);}
+    "*"					{ return createToken(sym.MULT);}
+    ">" 				{ return createToken(sym.GT);}
+    "/="				{ return createToken(sym.NEQ);}
+    "and" 				{ return createToken(sym.AND);}
+    ":=" 				{ return createToken(sym.ASSIGN);}
+    "."					{ return createToken(sym.DOT);}
     
-    // incluir aqui el resto de las reglas patron - accion
-    "procedure" 	{
-			   Token token = new Token(1);
-                           token.setLine (yyline + 1);
-                           token.setColumn (yycolumn + 1);
-                           token.setLexema (yytext ());
-           			       return token;
-			}
-
-   {ESPACIO_BLANCO}	{}
-
-{fin} {}
+    //delimitadores
+    (GSC) Es necesario 'escapar' las comillas usando \ 
+    "\""				{ return createToken(sym.COMILLAS);}
+    "(" 				{ return createToken(sym.APARENTESIS);}
+    ")" 				{ return createToken(sym.CPARENTESIS);}
+    ","					{ return createToken(sym.COMA);}
+    ";"					{ return createToken(sym.PUNTOYCOMA);}
+    ":"					{ return createToken(sym.DOSPUNTOS);}
     
-    // error en caso de coincidir con ningún patrón
+    //palabras reservadas
+    "begin" 			{ return createToken(sym.BEGIN);}
+    "Boolean" 			{ return createToken(sym.BOOLEAN);}
+    "constant" 			{ return createToken(sym.CONSTANT);}
+    "else" 				{ return createToken(sym.ELSE);}
+    "end" 				{ return createToken(sym.END);}
+    "False"				{ return createToken(sym.FALSE);}
+    "function" 			{ return createToken(sym.FUNCTION);}
+    "if"				{ return createToken(sym.IF);}
+    "Integer" 			{ return createToken(sym.INTEGER);}
+	"is"				{ return createToken(sym.IS);}
+	"loop"				{ return createToken(sym.LOOP);}
+	"out" 				{ return createToken(sym.OUT);}
+	"procedure" 		{ return createToken(sym.PROCEDURE);}
+	"Put_line" 			{ return createToken(sym.PUT_LINE);}
+	"record" 			{ return createToken(sym.RECORD);}
+	"return"			{ return createToken(sym.RETURN);}
+	"then" 				{ return createToken(sym.THEN);}
+	"True"				{ return createToken(sym.TRUE);}
+	"type"				{ return createToken(sym.TYPE);}
+	"while" 			{ return createToken(sym.WHILE);}
+	
+	 //palabras clave
+	{IDENTIFICADOR}     { return createToken(sym.IDENTIFICADOR);}
+	{DIGITO}			{ return createToken(sym.NUMERO);} 
+	{CADENA} 			{ return createToken(sym.CADENA);}            
+    {ESPACIO_BLANCO}	{ yycolumn = yycolumn + 1;}
+	{COMENTARIO} 		{}
+	{fin} {}
+	
+  	//fin de fichero
+    <<EOF>> 			{ return createToken(sym.EOF);}
+    
+    // error en caso de coincidir con ningÃºn patrÃ³n
 	[^]     
                         {                                               
                            LexicalError error = new LexicalError ();
@@ -72,7 +118,7 @@ fin = "fin"{ESPACIO_BLANCO}
     
 }
 
-
                          
+
 
 
