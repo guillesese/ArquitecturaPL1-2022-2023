@@ -1,0 +1,63 @@
+
+cabecera       ::= PROCEDURE ID LPAREN RPAREN IS;
+cuerpo         ::= declaraciones BEGIN bSentencias END ID SEMICOLON;
+declaraciones  ::= bDeclaraciones dSubprogramas; 
+
+bDeclaraciones ::= dDeclaraciones |;
+dDeclaraciones ::= dDeclaraciones declaracion | declaracion;
+declaracion    ::= ID declara SEMICOLON | dArreglo SEMICOLON;
+declara        ::= dConstante | dVariable;
+dConstante     ::= COLON CONSTANT ASSIGN vConstante;
+dVariable      ::= COLON rTipo | COMMA ID dVariable;
+vConstante     ::= rNumero | TRUE | FALSE;
+rNumero        ::= NUM;
+dArreglo       ::= TYPE ID IS ARRAY LPAREN aRango RPAREN OF tipoPrimitivo;
+aRango         ::= aRangeType RO aRangeType;
+aRangeType     ::= NUM | ID;
+tipoPrimitivo  ::= INTEGER | BOOLEAN;
+rTipo          ::= tipoPrimitivo | ID;
+dSubprogramas  ::= dSubprogramas dSubprograma |;
+dSubprograma   ::= dProcedimiento | dFuncion;
+dProcedimiento ::= pCabecera cuerpo; 
+dFuncion       ::= fCabecera cuerpo;
+fCabecera      ::= FUNCTION ID LPAREN pFormales RPAREN RETURN tipoPrimitivo IS;
+pFormales      ::= lPFormales |;
+lPFormales     ::= lPFormales SEMICOLON dPFormales 
+		 | dPFormales;
+dPFormales     ::= ID COLON modificador rTipo 
+		 | ID COMMA dPFormales;
+
+modificador    ::= OUT |;
+pCabecera      ::= PROCEDURE ID LPAREN pFormales RPAREN IS;
+
+referencia     ::= ID | referencia DOT ID;
+fCallOVector   ::= ID LPAREN pActuales RPAREN; 
+
+pActuales      ::= pActuales COMMA exp
+		 | exp
+		 | ;
+
+bSentencias    ::= lSentencias;
+lStencencias   ::= lSentencias sentencia | ;
+
+sentencia      ::= sentenciaIF | sentenciaWhile | sentenciaAsignacion | pCall | imprimir | returnExp;
+
+sentenciaIf    ::= IF condicion THEN bSentencias sentenciaElse END IF SEMICOLON;
+condicion      ::= lExp | relacion; 
+sentenciaElse  ::= ELSE bSentencias | ;
+sentenciaWhile ::= WHILE relacion LOOP lSentencias END LOOP SEMICOLON;
+sentenciaAsignacion ::= exp ASSIGN rExp SEMICOLON; 
+pCall          ::= ID LPAREN pActuales RPAREN SEMICOLON;
+
+imprimir       ::= PUT_LINE LPAREN texto RPAREN SEMICOLON; 
+
+texto          ::= lExp | relacion | STRING
+
+returnExp      ::= RETURN rExp SEMICOLON; 
+rExp           ::= lExp | relacion; 
+exp            ::= exp MINUS exp | rNumero | LPAREN exp RPAREN |
+		   fCallOVector | referencia | TRUE | FALSE; 
+lExp           ::= relacion relacionAnd;
+relacionAnd    ::= AND relacion | AND LPAREN lExp RPAREN | AND relacionAnd;
+
+relacion       ::= exp LT exp | exp

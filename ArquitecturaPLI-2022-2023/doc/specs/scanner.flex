@@ -17,14 +17,13 @@ import es.uned.lsi.compiler.lexical.LexicalErrorManager;
 %column
 %cup
 %unicode
-// (GSC) incluyo la directiva %ignorecase
-%ignorecase
-
 
 %implements ScannerIF
 %scanerror LexicalError
 
 // incluir aqui, si es necesario otras directivas
+// (GSC) incluyo la directiva %ignorecase
+%ignorecase
 
 %{
   LexicalErrorManager lexicalErrorManager = new LexicalErrorManager ();
@@ -45,10 +44,10 @@ ENTRADA = [^\r\n]
 ESPACIO_BLANCO = {FIN_LINEA} | [ \t\f]
 LETRA   = [A-Za-z_]
 DIGITO  = [0-9]
-CADENA = \"([\x20-\x7F])*\"
 LINEA_COMENTARIO = "--" {ENTRADA}* {FIN_LINEA}
 COMENTARIO = {LINEA_COMENTARIO}
 IDENTIFICADOR = {LETRA}({LETRA}|{DIGITO})*
+CADENA = \"([\x20-\x7F])*\"
 fin = "fin"{ESPACIO_BLANCO}
 
 %%

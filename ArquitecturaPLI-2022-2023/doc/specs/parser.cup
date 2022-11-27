@@ -103,25 +103,20 @@ terminal Token NUMERO;
 non terminal  			program;
 non terminal Axiom		axiom;
 //
-non terminal cabecera, cuerpo;
-non terminal Declaraciones; 
-non terminal DeclaracionConstantes,DeclaracionTipos, DeclaracionVariables,DeclaracionSubprogramas;
-non terminal CDecConstantes;
-non terminal dConstante;
-non terminal dValorConstante;
-non terminal sentencias;
-non terminal parametros;
-non terminal dConstantes, constantes, subprogramas;
-non terminal CDecTipos, dTipos,CamposRegistro;
-non terminal dVariable;
-non terminal tipoVariable;
-non terminal tipoPrimitivo;
-non terminal CDecVariables,dVariables; 
-non terminal CDecSubprogramas,Subprograma,Funcion,Procedimiento; 
-
-non terminal numero; 
-// ...
-
+non terminal Cabecera, Cuerpo;
+non terminal Declaraciones, Sentencias;
+non terminal LDeclaraciones,CDeclaraciones, LSubprogramas;
+non terminal Constantes, TiposEstructurados, VariablesGlobales;
+non terminal LConstantes, Constante; 
+non terminal Valor, Variable, Tipo, TipoPrimitivo;
+non terminal LTiposEstructurados, TipoEstructurado, LCamposReg;
+non terminal LVariablesGlobales, VariableGlobal;
+non terminal Numero, ValorBooleano;
+non terminal Subprograma;
+non terminal LSentencias, Sentencia;
+non terminal Procedimiento, Funcion;
+non terminal CabProcedimiento, CabFuncion;
+non terminal Parametros;
 
 // Declaracion de relaciones de precedencia
 precedence left DOT,APARENTESIS,CPARENTESIS;
@@ -145,87 +140,74 @@ program ::=
   		syntaxErrorManager.syntaxInfo ("Parsing process ended.");
 	:};
 
-axiom ::= cabecera cuerpo; 
-cabecera ::= PROCEDURE IDENTIFICADOR APARENTESIS CPARENTESIS IS;
-///tratamiento errores cabecera
-cabecera ::= PROCEDURE error{: syntaxErrorManager.syntaxInfo("No se ha especificado el nombre del programa");errorCounter++;:} APARENTESIS CPARENTESIS IS 
-			| PROCEDURE IDENTIFICADOR error{:syntaxErrorManager.syntaxInfo("Se esperaba (");errorCounter++;:} CPARENTESIS IS 
-			| PROCEDURE IDENTIFICADOR APARENTESIS error{:syntaxErrorManager.syntaxInfo("Se esperaba )");errorCounter++;:} IS 
-			| PROCEDURE IDENTIFICADOR APARENTESIS CPARENTESIS error{:syntaxErrorManager.syntaxInfo("Se esperaba )");errorCounter++;:}
-			| error{:syntaxErrorManager.syntaxInfo("Se debe especificar procedure ");errorCounter++;:} IDENTIFICADOR APARENTESIS CPARENTESIS IS;
-			
-cuerpo ::= Declaraciones BEGIN sentencias END IDENTIFICADOR PUNTOYCOMA;
-//tratamiento errores cuerpo
-cuerpo ::= Declaraciones error{: syntaxErrorManager.syntaxInfo("No se ha especificado BEGIN");errorCounter++;:} sentencias END IDENTIFICADOR PUNTOYCOMA
-			| Declaraciones BEGIN sentencias error{: syntaxErrorManager.syntaxInfo("No se ha especificado END");errorCounter++;:} IDENTIFICADOR PUNTOYCOMA
-			| Declaraciones BEGIN sentencias END error{: syntaxErrorManager.syntaxInfo("No se ha especificado un identificador");errorCounter++;:} PUNTOYCOMA
-			| Declaraciones BEGIN sentencias END IDENTIFICADOR error{: syntaxErrorManager.syntaxInfo("No se ha especificado un ;");errorCounter++;:};
+axiom          ::= Cabecera Cuerpo; 
+Cabecera       ::= PROCEDURE IDENTIFICADOR APARENTESIS CPARENTESIS IS;
+Cabecera       ::= PROCEDURE error{:syntaxErrorManager.syntaxInfo("Se debe especificar un identificador ");errorCounter++;:} APARENTESIS CPARENTESIS IS 
+			     | PROCEDURE IDENTIFICADOR error{:syntaxErrorManager.syntaxInfo("Se debe especificar un ( ");errorCounter++;:} CPARENTESIS IS
+			     | PROCEDURE IDENTIFICADOR APARENTESIS error{:syntaxErrorManager.syntaxInfo("Se debe especificar un ) ");errorCounter++;:} IS
+			     | PROCEDURE IDENTIFICADOR APARENTESIS CPARENTESIS error{:syntaxErrorManager.syntaxInfo("Se debe especificar is (cabecera) ");errorCounter++;:};
+			     
+Cuerpo         ::= Declaraciones BEGIN Sentencias END IDENTIFICADOR PUNTOYCOMA;
+Cuerpo         ::= Declaraciones error{:syntaxErrorManager.syntaxInfo("Se debe especificar begin ");errorCounter++;:} Sentencias END IDENTIFICADOR PUNTOYCOMA
+                 | Declaraciones BEGIN Sentencias error{:syntaxErrorManager.syntaxInfo("Se debe especificar end ");errorCounter++;:} IDENTIFICADOR PUNTOYCOMA
+                 | Declaraciones BEGIN Sentencias END error{:syntaxErrorManager.syntaxInfo("Se debe especificar un identificador ");errorCounter++;:} PUNTOYCOMA
+                 | Declaraciones BEGIN Sentencias END IDENTIFICADOR error{:syntaxErrorManager.syntaxInfo("Se debe especificar ; ");errorCounter++;:};
 
-Declaraciones ::= DeclaracionConstantes DeclaracionTipos DeclaracionVariables DeclaracionSubprogramas;
+//------------------------------------- ZONA DE DECLARACIONES ----------------------------------------
+Declaraciones  ::= LDeclaraciones LSubprogramas;
+//LDeclaraciones ::= CDeclaraciones | ;
+//CDeclaraciones ::= Constantes TiposEstructurados VariablesGlobales;
+LDeclaraciones ::= Constantes TiposEstructurados VariablesGlobales;
 
-//------------------------------------------- ZONA DE DECLARACION DE CONSTANTES -----------------------------
-DeclaracionConstantes ::= CDecConstantes | ;
-CDecConstantes ::= CDecConstantes dConstante | dConstante;
+//------------------------------ ZONA DE DECLARACIONES. CONSTANTES -----------------------------------
+Constantes     ::= Constantes Constante | ; 
+Constante      ::= IDENTIFICADOR DOSPUNTOS CONSTANT ASSIGN Valor PUNTOYCOMA; 
+Constante      ::= IDENTIFICADOR error{:syntaxErrorManager.syntaxInfo("Se debe especificar : ");errorCounter++;:} CONSTANT ASSIGN Valor PUNTOYCOMA
+				|  IDENTIFICADOR DOSPUNTOS error{:syntaxErrorManager.syntaxInfo("Se debe especificar constant  ");errorCounter++;:} ASSIGN Valor PUNTOYCOMA
+				|  IDENTIFICADOR DOSPUNTOS CONSTANT error{:syntaxErrorManager.syntaxInfo("Se debe especificar := ");errorCounter++;:} Valor PUNTOYCOMA
+				|  IDENTIFICADOR DOSPUNTOS CONSTANT ASSIGN Valor error{:syntaxErrorManager.syntaxInfo("Se debe especificar ; ");errorCounter++;:};
 
-dConstante ::= IDENTIFICADOR DOSPUNTOS CONSTANT ASSIGN dValorConstante PUNTOYCOMA;
-// control errores definicion de una constante 
-dConstante ::= IDENTIFICADOR error{:syntaxErrorManager.syntaxInfo("Se debe especificar : ");errorCounter++;:} CONSTANT ASSIGN dValorConstante PUNTOYCOMA
-			   | IDENTIFICADOR DOSPUNTOS error{:syntaxErrorManager.syntaxInfo("Se debe especificar constant");errorCounter++;:} ASSIGN dValorConstante PUNTOYCOMA
-			   | IDENTIFICADOR DOSPUNTOS CONSTANT error{:syntaxErrorManager.syntaxInfo("Se debe especificar := ");errorCounter++;:} dValorConstante PUNTOYCOMA;
-			   //| IDENTIFICADOR DOSPUNTOS CONSTANT dValorConstante error{:syntaxErrorManager.syntaxInfo("Se debe especificar ; ");errorCounter++;:};
-			   //| error{:syntaxErrorManager.syntaxInfo("Se debe especificar un identificador");errorCounter++;:} DOSPUNTOS CONSTANT ASSIGN dValorConstante;
-		   
-dValorConstante ::= NUMERO | TRUE | FALSE;
-dValorConstante ::= error{:syntaxErrorManager.syntaxInfo("Se debe especificar numero, True o False");errorCounter++;:};		    
+//----------------------------- ZONA DE DECLARACIONES. TIPOS ESTRUCTURADOS ---------------------------
+TiposEstructurados ::= TiposEstructurados TipoEstructurado | ;
+TipoEstructurado    ::= TYPE IDENTIFICADOR IS RECORD LCamposReg END RECORD PUNTOYCOMA;
+TipoEstructurado    ::= TYPE error{:syntaxErrorManager.syntaxInfo("Se debe especificar un identificador ");errorCounter++;:} IS RECORD LCamposReg END RECORD PUNTOYCOMA
+					  | TYPE IDENTIFICADOR error{:syntaxErrorManager.syntaxInfo("Se debe especificar is ");errorCounter++;:} RECORD LCamposReg END RECORD PUNTOYCOMA
+					  | TYPE IDENTIFICADOR IS error{:syntaxErrorManager.syntaxInfo("Se debe especificar record ");errorCounter++;:} LCamposReg END RECORD PUNTOYCOMA
+					  | TYPE IDENTIFICADOR IS RECORD LCamposReg error{:syntaxErrorManager.syntaxInfo("Se debe especificar end ");errorCounter++;:} RECORD PUNTOYCOMA
+					  | TYPE IDENTIFICADOR IS RECORD LCamposReg END error{:syntaxErrorManager.syntaxInfo("Se debe especificar record ");errorCounter++;:} PUNTOYCOMA
+					  | TYPE IDENTIFICADOR IS RECORD LCamposReg END RECORD error{:syntaxErrorManager.syntaxInfo("Se debe especificar ; ");errorCounter++;:};
+					  
+LCamposReg          ::= LCamposReg Variable PUNTOYCOMA | Variable PUNTOYCOMA;
 
-//------------------------------------------- ZONA DE DECLARACION DE TIPOS ESTRUCTURADOS ----------------------------------
-DeclaracionTipos ::= CDecTipos | ;
-CDecTipos ::= CDecTipos dTipos | dTipos; 
+//----------------------------- ZONA DE DECLARACIONES. VARIABLES GLOBALES ---------------------------
+VariablesGlobales   ::= VariablesGlobales VariableGlobal | ;  
+VariableGlobal      ::= IDENTIFICADOR COMA Variable PUNTOYCOMA | Variable PUNTOYCOMA; 
+//---------------------------------- DEFINICION DE VALOR --------------------------------------------
+Valor         ::= Numero | ValorBooleano; 
+Numero        ::= NUMERO;
+ValorBooleano ::= TRUE | FALSE; 
 
-dTipos ::= TYPE IDENTIFICADOR IS RECORD CamposRegistro END RECORD PUNTOYCOMA;
-dTipos ::= TYPE error{:syntaxErrorManager.syntaxInfo("Se debe especificar un identificador");errorCounter++;:} IS RECORD CamposRegistro END RECORD PUNTOYCOMA
-     	 | TYPE IDENTIFICADOR error{:syntaxErrorManager.syntaxInfo("Se debe especificar is ");errorCounter++;:} RECORD CamposRegistro END RECORD PUNTOYCOMA
-		 | TYPE IDENTIFICADOR IS error{:syntaxErrorManager.syntaxInfo("Se debe especificar record ");errorCounter++;:} CamposRegistro END RECORD PUNTOYCOMA
-		 | TYPE IDENTIFICADOR IS RECORD CamposRegistro error{:syntaxErrorManager.syntaxInfo("Se debe especificar end ");errorCounter++;:} RECORD PUNTOYCOMA
-		 | TYPE IDENTIFICADOR IS RECORD CamposRegistro END error{:syntaxErrorManager.syntaxInfo("Se debe especificar record ");errorCounter++;:};
-//		 | error{:syntaxErrorManager.syntaxInfo("Se debe especificar type");errorCounter++;:} IDENTIFICADOR IS RECORD CamposRegistro END RECORD;
+//---------------------------------- DEFINICION DE VARIABLE  --------------------------------------------
+Variable      ::= IDENTIFICADOR DOSPUNTOS Tipo;
+Tipo          ::= IDENTIFICADOR | TipoPrimitivo;
+TipoPrimitivo ::= INTEGER | BOOLEAN;
 
-CamposRegistro ::= CamposRegistro dVariable | dVariable ;
-dVariable ::= IDENTIFICADOR DOSPUNTOS tipoVariable PUNTOYCOMA;
-dVariable ::= IDENTIFICADOR error{:syntaxErrorManager.syntaxInfo("Se debe especificar :");errorCounter++;:} tipoVariable PUNTOYCOMA
-			| IDENTIFICADOR DOSPUNTOS tipoVariable error{:syntaxErrorManager.syntaxInfo("Se debe especificar ;");errorCounter++;:}
-			| error{:syntaxErrorManager.syntaxInfo("Se debe especificar identificador");errorCounter++;:} DOSPUNTOS tipoVariable PUNTOYCOMA;
- 
-//El tipo de una variable puede ser un Integer, un Boolean u otro registro (identificador)
-tipoVariable ::= tipoPrimitivo | IDENTIFICADOR; 
-//tipoVariable ::= error{:syntaxErrorManager.syntaxInfo("Se debe especificar integer, boolean o identificador ");errorCounter++;:};
+//---------------------------------- DEFINICION DE SUBPROGRAMAS  --------------------------------------------
+LSubprogramas  ::= LSubprogramas Subprograma | ;
+Subprograma    ::= Procedimiento | Funcion;
+Procedimiento  ::= CabProcedimiento Cuerpo; 
+Funcion        ::= CabFuncion Cuerpo;
 
-//Los tipos primitivos son Integer y Boolean
-tipoPrimitivo ::= INTEGER | BOOLEAN;
-tipoPrimitivo ::= error{:syntaxErrorManager.syntaxInfo("Se debe especificar integer o boolean ");errorCounter++;:};
+//---------------------------------- SUBPROGRAMAS. PROCEDIMIENTOS --------------------------------------------
+CabProcedimiento ::= PROCEDURE IDENTIFICADOR APARENTESIS Parametros CPARENTESIS IS;
+//CabProcedimiento ::= PROCEDURE error{:syntaxErrorManager.syntaxInfo("Se debe especificar un identificador ");errorCounter++;:} APARENTESIS Parametros CPARENTESIS IS
+//				   | PROCEDURE IDENTIFICADOR error{:syntaxErrorManager.syntaxInfo("Se debe especificar un ( ");errorCounter++;:} Parametros CPARENTESIS IS
+//				   | PROCEDURE IDENTIFICADOR APARENTESIS Parametros error{:syntaxErrorManager.syntaxInfo("Se debe especificar un identificador ");errorCounter++;:} IS
+//				   | PROCEDURE IDENTIFICADOR APARENTESIS Parametros CPARENTESIS error{:syntaxErrorManager.syntaxInfo("Se debe especificar IS");errorCounter++;:}; 
 
+//---------------------------------- SUBPROGRAMAS. FUNCIONES ------------------------------------------------
+CabFuncion    ::= FUNCTION IDENTIFICADOR APARENTESIS Parametros CPARENTESIS RETURN TipoPrimitivo IS;
 
-//------------------------------------------- ZONA DE DECLARACION DE VARIABLES GLOBALES --------------------------------------
-//DeclaracionVariables ::= ;
-DeclaracionVariables ::= ;//CDecVariables | ; // esta asignacion hace que no compile
-//CDecVariables ::= CDecVariables dVariables | dVariables;
-
-// dVariables ::= nvariable: (Integer, Boolean, registro); | nvar1, nvar2, nvar3: (Integer, Boolean, registro);
-// esta definición tb me sirve para los campos que se pasan como parametro
-dVariables ::= IDENTIFICADOR DOSPUNTOS tipoVariable PUNTOYCOMA | IDENTIFICADOR COMA dVariables; 
-dVariables ::= IDENTIFICADOR error{:syntaxErrorManager.syntaxInfo("Se debe especificar : ");errorCounter++;:} tipoVariable PUNTOYCOMA
-			 | IDENTIFICADOR DOSPUNTOS tipoVariable error{:syntaxErrorManager.syntaxInfo("Se debe especificar ; ");errorCounter++;:}
-			 | IDENTIFICADOR error{:syntaxErrorManager.syntaxInfo("Se debe especificar , ");errorCounter++;:} dVariables;
-
-
-//------------------------------------------- ZONA DE DECLARACION DE SUBPROGRAMAS ---------------------------------------------
-// Con esta estructura puedo tener funciones o procedimientos en un orden indeterminado
-DeclaracionSubprogramas ::= ; //CDecSubprogramas | ;
-//CDecSubprogramas ::= CDecSubprogramas Subprograma | Subprograma ;
-//Subprograma ::= Funcion | Procedimiento; 
-//Funcion ::= IDENTIFICADOR;
-//Procedimiento ::= IDENTIFICADOR;
-
-//-------------------------------------------
-subprogramas ::=;
-sentencias ::=;
+//----------------------------------- ZONA DE SENTENCIAS ---------------------------------------------------
+Sentencias    ::= LSentencias Sentencia | ;
+Sentencia     ::= ; 
