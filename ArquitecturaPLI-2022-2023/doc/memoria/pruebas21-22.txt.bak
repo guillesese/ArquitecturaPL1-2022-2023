@@ -43,33 +43,21 @@ lStencencias   ::= lSentencias sentencia | ;
 sentencia      ::= sentenciaIF | sentenciaWhile | sentenciaAsignacion | pCall | imprimir | returnExp;
 
 sentenciaIf    ::= IF condicion THEN bSentencias sentenciaElse END IF SEMICOLON;
-
+condicion      ::= lExp | relacion; 
 sentenciaElse  ::= ELSE bSentencias | ;
 sentenciaWhile ::= WHILE relacion LOOP lSentencias END LOOP SEMICOLON;
 sentenciaAsignacion ::= exp ASSIGN rExp SEMICOLON; 
 pCall          ::= ID LPAREN pActuales RPAREN SEMICOLON;
 
-imprimir       ::= PUT_LINE LPAREN texto RPAREN S+EMICOLON; 
+imprimir       ::= PUT_LINE LPAREN texto RPAREN SEMICOLON; 
 
 texto          ::= lExp | relacion | STRING
 
 returnExp      ::= RETURN rExp SEMICOLON; 
 rExp           ::= lExp | relacion; 
+exp            ::= exp MINUS exp | rNumero | LPAREN exp RPAREN |
+		   fCallOVector | referencia | TRUE | FALSE; 
+lExp           ::= relacion relacionAnd;
+relacionAnd    ::= AND relacion | AND LPAREN lExp RPAREN | AND relacionAnd;
 
-
-
-condicion   ::= lExp | relacion;
-lExp        ::= relacion | relacionAnd;
-relacion    ::= exp LT exp | exp; 
-relacionAnd ::= AND relacion | AND LPAREN lExp RPAREN | AND relacionAnd;
-exp         ::= exp MINUS exp | rNumero | LPAREN exp RPAREN | fCallOVector | referencia | TRUE | FALSE; 
-
-
-
-
-ImprimirPantalla   ::= PUT_LINE APARENTESIS Elemento CPARENTESIS PUNTOYCOMA;
-Elemento           ::= CADENA | Expresion | Relacion; 
-Expresion   ::= Relacion | RelacionAND; 
-Relacion    ::= exp LT exp | exp; 
-exp         ::= exp MINUS exp | Numero | ... 
-Comparacion ::= 
+relacion       ::= exp LT exp | exp

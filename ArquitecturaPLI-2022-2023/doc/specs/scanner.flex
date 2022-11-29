@@ -46,8 +46,8 @@ LETRA   = [A-Za-z_]
 DIGITO  = [0-9]
 LINEA_COMENTARIO = "--" {ENTRADA}* {FIN_LINEA}
 COMENTARIO = {LINEA_COMENTARIO}
-IDENTIFICADOR = {LETRA}({LETRA}|{DIGITO})*
-CADENA = \"([\x20-\x7F])*\"
+IDENTIFICADOR = {LETRA}({LETRA}|{DIGITO}+)*
+CADENA = \"([\x21-\x7F])*\"
 fin = "fin"{ESPACIO_BLANCO}
 
 %%
@@ -96,9 +96,9 @@ fin = "fin"{ESPACIO_BLANCO}
 	
 	 //palabras clave
 	{IDENTIFICADOR}     { return createToken(sym.IDENTIFICADOR);}
-	{DIGITO}			{ return createToken(sym.NUMERO);} 
+	{DIGITO}+			{ return createToken(sym.NUMERO);} 
 	{CADENA} 			{ return createToken(sym.CADENA);}            
-    {ESPACIO_BLANCO}	{ yycolumn = yycolumn + 1;}
+    {ESPACIO_BLANCO}	{}
 	{COMENTARIO} 		{}
 	{fin} {}
 	
