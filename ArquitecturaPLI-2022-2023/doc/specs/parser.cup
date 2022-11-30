@@ -126,7 +126,7 @@ non terminal Expresion;
 non terminal SentenciaWhile, SentenciaAsignacion, Invocacion,Invocacion2,Return;
 non terminal Texto,LExpresion,ExpresionReturn, pActuales;
 
-non terminal CuerpoRet,SentenciasRet,LSentenciasRet,SentenciaRet;
+non terminal CuerpoFunc,SentenciasRet,LSentenciasRet,SentenciaRet;
 
 // Declaracion de relaciones de precedencia
 precedence left DOT,APARENTESIS,CPARENTESIS;
@@ -136,7 +136,7 @@ precedence left GT;
 precedence left NEQ;
 precedence left AND;
 // Tengo que controlar el orden si o si 
-precedence left Constante,TipoEstructurado, Variable;
+precedence left Constante,TipoEstructurado,Variable,Subprograma;
 
 // Declaración de reglas de produccion
 start with program;
@@ -152,8 +152,7 @@ program ::=
 	:};
 	
 // Cosas no controladas. 
-// 1. No se controla el orden en la declaracion. 
-// 2. Se pueden crear constantes en procedimientos y funciones...
+// 1. Se pueden crear constantes en procedimientos y funciones...
 
 axiom      ::= Cabecera Cuerpo;
 
@@ -171,7 +170,7 @@ Cuerpo     ::= Declaraciones error{:syntaxErrorManager.syntaxInfo("Se debe espec
              | Declaraciones BEGIN Sentencias END IDENTIFICADOR error{:syntaxErrorManager.syntaxInfo("Se debe especificar ; ");errorCounter++;:};
 
 // La definicion de CuerpoRet es similar a la de Cuerpo. Tengo que tener en cuenta que los Procedimientos no tienen que tener return y las funciones si. 
-CuerpoRet  ::= Declaraciones BEGIN SentenciasRet END IDENTIFICADOR PUNTOYCOMA;
+CuerpoFunc  ::= Declaraciones BEGIN SentenciasRet END IDENTIFICADOR PUNTOYCOMA;
 
 Declaraciones    ::= LDeclaraciones LSubprogramas; 
 LDeclaraciones   ::= DDeclaraciones |; 
@@ -209,7 +208,7 @@ TipoPrimitivo    ::= INTEGER | BOOLEAN;
 LSubprogramas    ::= LSubprogramas Subprograma | ; 
 Subprograma      ::= Procedimiento | Funcion;
 Procedimiento    ::= CabProcedimiento Cuerpo; 
-Funcion          ::= CabFuncion CuerpoRet;
+Funcion          ::= CabFuncion CuerpoFunc;
  
 //-------------------------------- DEFINICION DE PROCEDIMIENTO Y FUNCION ----------------------------------------------
 CabProcedimiento ::= PROCEDURE IDENTIFICADOR APARENTESIS Parametros CPARENTESIS IS;
