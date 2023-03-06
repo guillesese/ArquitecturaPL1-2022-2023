@@ -113,6 +113,7 @@ non terminal Valor, Variable, Tipo, TipoPrimitivo;
 non terminal TipoEstructurado, LCamposReg;
 non terminal Numero;
 non terminal Subprograma;
+non terminal LConstantes,DConstantes,LRestoDeclaraciones;
 non terminal LSentencias, Sentencia;
 non terminal Procedimiento, Funcion;
 non terminal CabProcedimiento, CabFuncion;
@@ -126,7 +127,7 @@ non terminal Expresion;
 non terminal SentenciaWhile, SentenciaAsignacion, Invocacion,Invocacion2,Return;
 non terminal Texto,LExpresion,ExpresionReturn, pActuales;
 
-non terminal CuerpoFunc,SentenciasRet,LSentenciasRet,SentenciaRet;
+non terminal CuerpoFunc,CuerpoProc,SentenciasRet,LSentenciasRet,SentenciaRet;
 
 // Declaracion de relaciones de precedencia
 precedence left DOT,APARENTESIS,CPARENTESIS;
@@ -151,9 +152,6 @@ program ::=
   		syntaxErrorManager.syntaxInfo ("Parsing process ended.");
 	:};
 	
-// Cosas no controladas. 
-// 1. Se pueden crear constantes en procedimientos y funciones...
-
 axiom      ::= Cabecera Cuerpo;
 
 //------------------------------------------------------- ZONA DE DEFINICION DE CABECERA --------------------------------------------- 
@@ -162,22 +160,25 @@ Cabecera   ::= PROCEDURE error{:syntaxErrorManager.syntaxInfo("Se debe especific
 			 | PROCEDURE IDENTIFICADOR error{:syntaxErrorManager.syntaxInfo("Se debe especificar un ( ");errorCounter++;:} CPARENTESIS IS
 			 | PROCEDURE IDENTIFICADOR APARENTESIS error{:syntaxErrorManager.syntaxInfo("Se debe especificar un ) ");errorCounter++;:} IS
 			 | PROCEDURE IDENTIFICADOR APARENTESIS CPARENTESIS error{:syntaxErrorManager.syntaxInfo("Se debe especificar is (cabecera) ");errorCounter++;:};
-			     
-Cuerpo     ::= Declaraciones BEGIN Sentencias END IDENTIFICADOR PUNTOYCOMA;
-Cuerpo     ::= Declaraciones error{:syntaxErrorManager.syntaxInfo("Se debe especificar begin ");errorCounter++;:} Sentencias END IDENTIFICADOR PUNTOYCOMA
-           	 | Declaraciones BEGIN Sentencias error{:syntaxErrorManager.syntaxInfo("Se debe especificar end ");errorCounter++;:} IDENTIFICADOR PUNTOYCOMA
-             | Declaraciones BEGIN Sentencias END error{:syntaxErrorManager.syntaxInfo("Se debe especificar un identificador ");errorCounter++;:} PUNTOYCOMA
-             | Declaraciones BEGIN Sentencias END IDENTIFICADOR error{:syntaxErrorManager.syntaxInfo("Se debe especificar ; ");errorCounter++;:};
 
-// La definicion de CuerpoRet es similar a la de Cuerpo. Tengo que tener en cuenta que los Procedimientos no tienen que tener return y las funciones si. 
-CuerpoFunc  ::= Declaraciones BEGIN SentenciasRet END IDENTIFICADOR PUNTOYCOMA;
+// Cuerpo principal del programa. ¡No es totalmente igual a los de los subprogramas!			     
+Cuerpo ::= Declaraciones BEGIN Sentencias END IDENTIFICADOR PUNTOYCOMA;
+Cuerpo ::= Declaraciones error{:syntaxErrorManager.syntaxInfo("Se debe especificar begin ");errorCounter++;:} Sentencias END IDENTIFICADOR PUNTOYCOMA
+           	   | Declaraciones BEGIN Sentencias error{:syntaxErrorManager.syntaxInfo("Se debe especificar end ");errorCounter++;:} IDENTIFICADOR PUNTOYCOMA
+               | Declaraciones BEGIN Sentencias END error{:syntaxErrorManager.syntaxInfo("Se debe especificar un identificador ");errorCounter++;:} PUNTOYCOMA
+               | Declaraciones BEGIN Sentencias END IDENTIFICADOR error{:syntaxErrorManager.syntaxInfo("Se debe especificar ; ");errorCounter++;:};
 
-Declaraciones    ::= LDeclaraciones LSubprogramas; 
+Declaraciones    ::= LConstantes LRestoDeclaraciones; 
+LRestoDeclaraciones ::= LDeclaraciones LSubprogramas;
+
+LConstantes      ::= DConstantes | ;
+DConstantes      ::= DConstantes Constante | Constante;
+
 LDeclaraciones   ::= DDeclaraciones |; 
 DDeclaraciones   ::= DDeclaraciones Declaracion | Declaracion; 
 
-Declaracion      ::= IDENTIFICADOR Declara PUNTOYCOMA | TipoEstructurado PUNTOYCOMA;
-Declara          ::= Constante | Variable;
+Declaracion      ::= IDENTIFICADOR Variable PUNTOYCOMA | TipoEstructurado PUNTOYCOMA;
+
 Constante        ::= DOSPUNTOS CONSTANT ASSIGN Valor;
 Constante		 ::= DOSPUNTOS error{:syntaxErrorManager.syntaxInfo("Se debe especificar constant ");errorCounter++;:} ASSIGN Valor 
 				  |  DOSPUNTOS CONSTANT error{:syntaxErrorManager.syntaxInfo("Se debe especificar := ");errorCounter++;:} Valor;    
@@ -188,6 +189,7 @@ Valor            ::= Numero | TRUE | FALSE
 				   | error{:syntaxErrorManager.syntaxInfo("Se debe especificar Numero, True o False ");errorCounter++;:};
 				
 Numero           ::= NUMERO; 
+
 TipoEstructurado ::= TYPE IDENTIFICADOR IS RECORD LCamposReg END RECORD;
 TipoEstructurado ::= TYPE error{:syntaxErrorManager.syntaxInfo("Se debe especificar identificador ");errorCounter++;:} IS RECORD LCamposReg END RECORD
 				  |  TYPE IDENTIFICADOR error{:syntaxErrorManager.syntaxInfo("Se debe especificar is ");errorCounter++;:} RECORD LCamposReg END RECORD
@@ -198,22 +200,28 @@ TipoEstructurado ::= TYPE error{:syntaxErrorManager.syntaxInfo("Se debe especifi
 vRegistro        ::= IDENTIFICADOR DOSPUNTOS Tipo PUNTOYCOMA
 				  |  error{:syntaxErrorManager.syntaxInfo("Se debe definir un campo de registros ");errorCounter++;:};
 					
-LCamposReg       ::= LCamposReg vRegistro | vRegistro ; //Dudas en esta produccion
+LCamposReg       ::= LCamposReg vRegistro | vRegistro ;
 Tipo             ::= TipoPrimitivo | IDENTIFICADOR;
 //				   | error{:syntaxErrorManager.syntaxInfo("Se debe especificar Integer, Boolean o Identificador ");errorCounter++;:};
 				   
 TipoPrimitivo    ::= INTEGER | BOOLEAN;
-//TipoPrimitivo    ::= error{:syntaxErrorManager.syntaxInfo("Se debe especificar Integer o Boolean ");errorCounter++;:};
-                   
+
+//------------------------------------------------------- ZONA DE SUBPROGRAMAS --------------------------------------------- 
+                 
 LSubprogramas    ::= LSubprogramas Subprograma | ; 
 Subprograma      ::= Procedimiento | Funcion;
-Procedimiento    ::= CabProcedimiento Cuerpo; 
+Procedimiento    ::= CabProcedimiento CuerpoProc; 
 Funcion          ::= CabFuncion CuerpoFunc;
  
-//-------------------------------- DEFINICION DE PROCEDIMIENTO Y FUNCION ----------------------------------------------
+// Declaro las cabeceras para cada uno. 
 CabProcedimiento ::= PROCEDURE IDENTIFICADOR APARENTESIS Parametros CPARENTESIS IS;
 CabFuncion       ::= FUNCTION IDENTIFICADOR APARENTESIS Parametros CPARENTESIS RETURN TipoPrimitivo IS;
- 
+
+
+// La definicion de CuerpoFunc es similar a la de Cuerpo. Tengo que tener en cuenta que los Procedimientos no tienen que tener return y las funciones si. 
+CuerpoFunc  ::= LRestoDeclaraciones BEGIN SentenciasRet END IDENTIFICADOR PUNTOYCOMA;
+CuerpoProc  ::= LRestoDeclaraciones BEGIN Sentencias END IDENTIFICADOR PUNTOYCOMA;
+
 Parametros       ::= LParametros | ;
 LParametros      ::= LParametros PUNTOYCOMA Parametro | Parametro;
 Parametro        ::= IDENTIFICADOR DOSPUNTOS Modificador Tipo
@@ -227,11 +235,11 @@ LSentencias      ::= LSentencias Sentencia | ;
 SentenciasRet    ::= LSentenciasRet;
 LSentenciasRet   ::= LSentenciasRet SentenciaRet |;
 
-//------------------------------ DEFINICION DE LAS SENTENCIAS DEL CUERPO ---------------------------------------------
+
 // para cuerpo de procedimiento 
 Sentencia        ::= ImprimirPantalla | SentenciaIF | SentenciaWhile | SentenciaAsignacion | Invocacion ;
 // Para cuerpo de funciones
-SentenciaRet     ::= ImprimirPantalla | SentenciaIF | SentenciaWhile | SentenciaAsignacion | Invocacion | Return ;  
+SentenciaRet     ::= Sentencia | Return ;  
 
 ImprimirPantalla ::= PUT_LINE APARENTESIS Texto CPARENTESIS PUNTOYCOMA;
 SentenciaIF      ::= IF Condicion THEN Sentencias SentenciaELSE END IF PUNTOYCOMA; 
